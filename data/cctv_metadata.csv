@@ -1,0 +1,4 @@
+camera_id,location,time,top,bottom,height_cm,base_similarity,frame_path,video_path
+C12,Level 2 East Wing,15:17,pink shirt,blue jeans,115,0.91,cctv_frames/cam_C12.jpg,cctv_videos/cam_C12.mp4
+C09,Food Court,15:14,pink shirt,blue jeans,118,0.74,cctv_frames/cam_C09.jpg,cctv_videos/cam_C09.mp4
+C07,Main Entrance,15:12,red shirt,blue jeans,116,0.68,cctv_frames/cam_C07.jpg,cctv_videos/cam_C07.mp4

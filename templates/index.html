@@ -1,0 +1,2433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KidTrace AI</title>
+
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap"
+  rel="stylesheet"
+>
+
+<style>
+:root{
+  --bg:#050a12;
+  --g:#7be0a4;
+  --tx:#e8f2ee;
+  --mu:#9bb5ad;
+  --gl:rgba(18,36,40,.55);
+  --bd:rgba(123,224,164,.25);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;height:100%;background:var(--bg);
+  color:var(--tx);font-family:Inter,system-ui,sans-serif;
+  overflow:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;
+  background:
+    radial-gradient(60vw 60vw at 15% 10%,rgba(123,224,164,.12),transparent 60%),
+    radial-gradient(50vw 50vw at 90% 90%,rgba(40,90,140,.25),transparent 60%);
+}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.55;cursor:default}
+b,.a{color:var(--g)}
+.scan{
+  position:fixed;inset:0;pointer-events:none;z-index:50;
+  background:repeating-linear-gradient(
+    0deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px
+  );
+  box-shadow:inset 0 0 160px rgba(0,0,0,.5);
+}
+.scan::after{
+  content:"";position:absolute;left:0;right:0;height:120px;
+  background:linear-gradient(
+    transparent,rgba(123,224,164,.045),transparent
+  );
+  animation:sweep 7s linear infinite;
+}
+@keyframes sweep{from{top:-120px}to{top:100%}}
+@keyframes up{from{opacity:0;transform:translateY(20px)}}
+@keyframes blink{50%{opacity:.35}}
+@keyframes floatTile{50%{transform:translateY(-16px)}}
+@keyframes scanButton{to{left:110%}}
+
+.pg{
+  position:fixed;inset:0;display:flex;
+  align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;overflow:auto;
+  padding:24px;z-index:1;
+}
+.pg.on{opacity:1;visibility:visible}
+#p3,#p4{display:block;padding:0}
+
+.gl{
+  background:var(--gl);
+  backdrop-filter:blur(18px);
+  -webkit-backdrop-filter:blur(18px);
+  border:1px solid var(--bd);
+  border-radius:20px;
+  box-shadow:0 24px 60px rgba(0,0,0,.35);
+}
+.k{
+  font-size:12px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--g);
+}
+.btn{
+  font:600 14px Inter,sans-serif;letter-spacing:.15em;
+  border:1px solid var(--g);
+  background:linear-gradient(
+    180deg,rgba(123,224,164,.25),rgba(123,224,164,.08)
+  );
+  color:#eafff3;padding:16px 30px;border-radius:12px;
+  box-shadow:0 0 24px rgba(123,224,164,.15);
+  transition:background .2s,box-shadow .2s;
+}
+.btn:hover{
+  background:rgba(123,224,164,.23);
+  box-shadow:0 0 30px rgba(123,224,164,.25);
+}
+.smallbtn{font-size:11px;letter-spacing:.06em}
+
+#p1{text-align:center;flex-direction:column}
+#p1 h1{
+  font-weight:200;font-size:clamp(52px,10vw,150px);
+  letter-spacing:-.03em;margin:12px 0 0;line-height:1;
+}
+#p1 h2{
+  font-weight:300;font-size:clamp(15px,2vw,26px);
+  color:var(--mu);margin:14px 0 0;
+}
+#p1 .tag{
+  font-size:clamp(18px,2.6vw,36px);
+  font-weight:300;margin-top:26px;
+}
+#p1 p{
+  max-width:680px;color:var(--mu);font-weight:300;
+  line-height:1.6;margin:22px auto 38px;
+  font-size:clamp(14px,1.4vw,19px);
+}
+.tile{
+  position:absolute;width:200px;height:116px;
+  border-radius:10px;border:1px solid var(--bd);
+  background:linear-gradient(135deg,#10242a,#07120f);
+  font:11px monospace;color:var(--g);padding:8px;
+  animation:floatTile 8s ease-in-out infinite;
+  opacity:.45;pointer-events:none;
+}
+.tile i{
+  position:absolute;bottom:8px;left:8px;
+  color:#bcd;font-style:normal;
+}
+.tile u{
+  position:absolute;right:8px;top:8px;width:7px;height:7px;
+  border-radius:50%;background:#f66;
+}
+.tile::before{
+  content:"";position:absolute;left:45%;top:40%;
+  width:22px;height:48px;border:1px solid var(--g);
+}
+
+#loginForm{width:min(440px,100%);padding:38px 34px}
+#loginForm h2{margin:8px 0;font-size:30px;font-weight:300}
+.sub{color:var(--mu);font-size:14px;margin:0 0 26px}
+label{
+  display:block;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--mu);margin:18px 0 8px;
+}
+.in{position:relative}
+input[type=text],input[type=password],input[type=date],
+input[type=time],input[type=number],select{
+  width:100%;background:rgba(5,12,16,.6);
+  border:1px solid var(--bd);border-radius:12px;
+  color:var(--tx);padding:14px 16px;font-size:14px;
+  outline:none;min-width:0;
+}
+input:focus,select:focus{
+  border-color:var(--g);
+  box-shadow:0 0 0 3px rgba(123,224,164,.12);
+}
+input[type=date],input[type=time]{color-scheme:dark}
+.eye{
+  position:absolute;right:8px;top:50%;
+  transform:translateY(-50%);background:none;border:0;
+  color:var(--mu);padding:8px;
+}
+.row{
+  display:flex;justify-content:space-between;
+  align-items:center;gap:10px;margin:16px 0 22px;
+  font-size:13px;color:var(--mu);
+}
+.row label{
+  display:flex;gap:8px;align-items:center;margin:0;
+  text-transform:none;letter-spacing:0;font-size:13px;
+}
+.row input{accent-color:var(--g)}
+.row button{background:none;border:0;color:var(--g);font:inherit}
+#msg{min-height:22px;font-size:14px;text-align:center;margin-bottom:12px}
+.err{color:#ff9d9d!important}
+.ok{color:var(--g)}
+#loginForm .btn{width:100%}
+.foot{
+  text-align:center;font-size:12px;color:var(--mu);
+  margin-top:22px;line-height:2;
+}
+.dot{color:var(--g);animation:blink 2s infinite}
+
+/* Sidebar */
+.appShell{display:flex;min-height:100vh}
+.sideNav{
+  width:220px;flex:0 0 220px;
+  background:rgba(10,17,25,.96);
+  border-right:1px solid var(--bd);
+  padding:18px 12px;position:sticky;top:0;
+  height:100vh;overflow-x:hidden;overflow-y:auto;
+  transition:width .25s ease,flex-basis .25s ease;
+}
+.sidebarToggleRow{
+  display:flex;justify-content:flex-end;margin-bottom:18px;
+}
+.sidebarToggle{
+  display:flex;align-items:center;justify-content:center;
+  width:36px;height:36px;padding:0;
+  border:1px solid var(--bd);border-radius:10px;
+  background:rgba(123,224,164,.06);color:var(--g);
+  font:28px/1 Inter,sans-serif;
+}
+.sidebarToggle:hover{background:rgba(123,224,164,.18)}
+.sideBrand{
+  padding:6px 5px 20px;
+  border-bottom:1px solid rgba(255,255,255,.1);
+  margin-bottom:18px;
+}
+.sideBrand small{
+  color:var(--g);font-size:10px;font-weight:600;
+  letter-spacing:.14em;line-height:1.6;
+}
+.sideMenu{display:flex;flex-direction:column;gap:8px}
+.sideMenu button{
+  width:100%;display:flex;align-items:center;gap:12px;
+  min-height:46px;padding:10px 12px;
+  border:1px solid transparent;border-radius:10px;
+  background:transparent;color:var(--tx);
+  text-align:left;white-space:nowrap;
+}
+.sideMenu button:hover{
+  background:rgba(255,255,255,.04);border-color:var(--bd);
+}
+.sideMenu button.active{
+  background:rgba(123,224,164,.12);
+  border-color:rgba(123,224,164,.35);
+}
+.navIcon{
+  width:22px;height:22px;flex:0 0 22px;
+  display:flex;align-items:center;justify-content:center;
+}
+.navIcon svg{
+  width:21px;height:21px;fill:none;stroke:currentColor;
+  stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+}
+.navText{font-size:13px}
+.sideCase{
+  border-top:1px solid rgba(255,255,255,.1);
+  margin-top:22px;padding-top:18px;
+  color:var(--mu);font-size:11px;line-height:1.6;
+  overflow-wrap:anywhere;
+}
+body.sidebarCollapsed .sideNav{width:76px;flex-basis:76px}
+body.sidebarCollapsed .sidebarToggleRow{justify-content:center}
+body.sidebarCollapsed .sideBrand,
+body.sidebarCollapsed .sideCase,
+body.sidebarCollapsed .navText{display:none}
+body.sidebarCollapsed .sideMenu button{justify-content:center;padding:10px 0}
+
+.shellMain{min-width:0;flex:1}
+.bar{
+  display:flex;justify-content:space-between;align-items:center;
+  min-height:68px;padding:12px 24px;gap:16px;
+  border-bottom:1px solid var(--bd);
+  background:rgba(5,10,18,.9);
+  backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:5;
+}
+.headerTitle{display:flex;flex-direction:column;gap:4px}
+.bar h3{margin:0;font-weight:300;font-size:20px}
+.pageContext{
+  color:var(--mu);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;
+}
+.headerActions{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  color:var(--mu);font-size:12px;
+}
+.lo{
+  background:none;border:1px solid var(--bd);color:var(--tx);
+  border-radius:8px;padding:8px 14px;font-size:12px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:minmax(240px,.85fr) minmax(350px,1.4fr) minmax(280px,1fr);
+  gap:18px;padding:22px 24px;
+  min-height:calc(100vh - 68px);
+}
+.pn{padding:22px;min-width:0}
+.pn h4{
+  margin:0 0 14px;font-weight:500;font-size:13px;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--g);
+}
+.pn input,.pn select{margin-bottom:10px}
+.pn input[type=number],.pn input[type=date],
+.pn input[type=time],.pn select{
+  height:42px;padding:0 12px;color-scheme:dark;
+}
+.pn .btn{
+  width:100%;min-height:58px;padding:10px 12px;
+  display:flex;align-items:center;justify-content:center;
+  line-height:1.2;text-align:center;
+}
+#selectLocationBtn,#sb{margin-bottom:8px}
+#sb.loading{position:relative;overflow:hidden;cursor:wait}
+#sb.loading::after{
+  content:"";position:absolute;left:-35%;top:0;
+  width:30%;height:100%;
+  background:linear-gradient(
+    90deg,transparent,rgba(123,224,164,.24),transparent
+  );
+  animation:scanButton 1.1s linear infinite;
+}
+.ph{
+  height:140px;border:1px dashed var(--bd);border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--mu);font-size:13px;margin-bottom:10px;
+  cursor:pointer;overflow:hidden;background:rgba(5,12,16,.42);
+}
+.ph img{width:100%;height:100%;object-fit:contain}
+.selectedLoc{
+  padding:10px 12px;border:1px solid var(--bd);
+  border-radius:10px;color:var(--g);font-size:12px;
+  margin-bottom:10px;line-height:1.5;
+}
+.warn{
+  color:#ffd37a;border:1px solid rgba(255,211,122,.4);
+  border-radius:10px;padding:10px 14px;font-size:12px;
+  line-height:1.5;margin-bottom:14px;
+}
+.caseid{font:11px monospace;color:var(--mu);margin-bottom:10px;overflow-wrap:anywhere}
+.empty{color:var(--mu);font-size:13px;padding:24px 0;text-align:center}
+.note{font-size:12px;color:var(--mu);line-height:1.6;margin-top:12px}
+.mc{
+  padding:14px;border-radius:14px;border:1px solid var(--bd);
+  background:rgba(8,18,20,.6);margin-bottom:12px;
+  display:grid;grid-template-columns:minmax(120px,.9fr) minmax(0,1fr);
+  gap:14px;animation:up .4s both;
+}
+.mc.cur{border-color:var(--g);box-shadow:0 0 24px rgba(123,224,164,.12)}
+.mc video{
+  width:100%;height:120px;object-fit:cover;
+  border-radius:8px;background:#06100e;
+}
+.mc h5{margin:0 0 6px;font-weight:500;font-size:14px}
+.mc p{margin:3px 0;font-size:12px;color:var(--mu);line-height:1.5}
+.sim{height:6px;background:rgba(123,224,164,.15);border-radius:4px;margin:8px 0}
+.sim i{display:block;height:100%;background:var(--g);border-radius:4px}
+.bt{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.bt button{
+  font:600 10px Inter,sans-serif;letter-spacing:.06em;
+  padding:8px 10px;border-radius:8px;border:1px solid var(--bd);
+  background:rgba(255,255,255,.04);color:var(--tx);
+}
+.bt .v{background:rgba(123,224,164,.2);border-color:var(--g)}
+.breakdown{margin-top:8px;display:none;font-size:11px;color:var(--mu);line-height:1.6}
+.breakdown.on{display:block}
+#tl>div:not(.empty){
+  padding:6px 0 6px 14px;border-left:1.5px solid var(--g);
+  font-size:12px;line-height:1.5;position:relative;
+  overflow-wrap:anywhere;
+}
+#tl>div:not(.empty)::before{
+  content:"";position:absolute;left:-5px;top:11px;
+  width:8px;height:8px;border-radius:50%;background:var(--g);
+}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.latestLocationValue{font-size:14px;line-height:1.5;margin-bottom:8px}
+
+/* Map windows */
+.modal,.viewerModal{
+  position:fixed;inset:0;display:none;align-items:center;
+  justify-content:center;padding:24px;
+}
+.modal{z-index:100;background:rgba(0,0,0,.75)}
+.viewerModal{z-index:200;background:rgba(0,0,0,.86)}
+.modal.on,.viewerModal.on{display:flex}
+.modalCard{width:min(980px,96vw);max-height:92vh;overflow:auto;padding:22px}
+.modalHead,.viewerHead{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:18px;margin-bottom:14px;
+}
+.modalHead h3,.viewerHead h3{font-weight:300;font-size:20px;margin:0}
+.x{
+  background:none;border:1px solid var(--bd);color:var(--tx);
+  border-radius:8px;padding:7px 11px;
+}
+.mapWrap,.miniMap{
+  position:relative;background:#fff;border:2px solid #fff;
+  padding:8px;border-radius:12px;overflow:hidden;
+}
+.miniMap{margin-top:12px}
+.mapWrap img,.miniMap img{display:block;width:100%;height:auto}
+.miniMap svg{
+  position:absolute;left:8px;top:8px;
+  width:calc(100% - 16px);height:calc(100% - 16px);
+}
+.mapFooter{display:flex;gap:10px;align-items:center;margin-top:14px}
+.mapFooter .btn{padding:12px 20px}
+.mapPoly{
+  fill:rgba(123,224,164,.03);stroke:rgba(123,224,164,.2);
+  stroke-width:1;cursor:pointer;pointer-events:all;
+}
+.mapPoly:hover{fill:rgba(123,224,164,.24);stroke:var(--g);stroke-width:2}
+.mapPoly.sel{fill:rgba(123,224,164,.34);stroke:var(--g);stroke-width:3}
+#mapTip{
+  position:fixed;display:none;z-index:9999!important;
+  pointer-events:none;background:#07120f;color:#fff;
+  border:1px solid var(--g);border-radius:8px;
+  padding:8px 10px;font-size:12px;line-height:1.5;
+  max-width:min(300px,calc(100vw - 20px));
+  white-space:pre-line;overflow-wrap:anywhere;
+  box-shadow:0 4px 16px rgba(0,0,0,.4);
+}
+.media-clickable{cursor:zoom-in}
+.viewerCard{
+  width:min(1100px,96vw);max-height:94vh;
+  padding:18px;display:flex;flex-direction:column;gap:12px;
+}
+.viewerHead{margin-bottom:0}
+.viewerBody{
+  display:flex;align-items:center;justify-content:center;
+  min-height:200px;max-height:78vh;overflow:auto;
+  border-radius:14px;background:#03080d;border:1px solid var(--bd);
+}
+.viewerBody>img{display:block;max-width:100%;max-height:76vh;object-fit:contain}
+.viewerBody video{display:block;width:min(100%,1000px);max-height:76vh;background:#000}
+.viewerHint{color:var(--mu);font-size:12px;text-align:center}
+.movementViewer{width:100%;background:#fff;padding:10px;border-radius:12px}
+.movementViewer .mapLegend,.movementViewer .mapCaption{color:#334155}
+.mapLegend{
+  display:flex;align-items:center;flex-wrap:wrap;gap:5px;
+  color:var(--mu);font-size:11px;margin-bottom:10px;line-height:1.5;
+}
+.legendDot{
+  display:inline-block;width:9px;height:9px;
+  border-radius:50%;vertical-align:middle;margin-right:4px;
+}
+.legendBlue{background:#2563eb}
+.legendOrange{background:#f59e0b}
+.legendRed{background:#dc2626}
+.mapClickHint{flex-basis:100%;font-size:10px}
+.mapCaption{color:var(--mu);font-size:11px;margin-top:10px;line-height:1.5}
+.zoomStage{
+  position:relative;overflow:hidden;background:#fff;
+  border-radius:10px;touch-action:none;cursor:grab;
+}
+.zoomStage.dragging{cursor:grabbing}
+.zoomContent{position:relative;transform-origin:0 0;will-change:transform}
+.zoomContent img{
+  width:100%;display:block;max-height:none;
+  user-select:none;-webkit-user-drag:none;
+}
+.zoomContent svg{position:absolute;inset:0;width:100%;height:100%}
+.mapZoomControls{
+  position:absolute;left:10px;top:10px;z-index:50;
+  display:flex;flex-direction:column;
+  border:1px solid #bbb;border-radius:7px;
+  overflow:hidden;background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,.18);
+}
+.mapZoomControls button{
+  width:34px;height:34px;border:0;border-bottom:1px solid #ddd;
+  background:#fff;color:#111;font:600 22px/1 Arial,sans-serif;
+}
+.mapZoomControls button:last-child{border-bottom:0}
+.mapZoomControls button:hover{background:#eee}
+.routeLine{
+  fill:none;stroke:#2563eb;stroke-width:5;
+  stroke-dasharray:14 10;pointer-events:none;
+}
+.routeLabel{
+  font:700 24px Inter,sans-serif;fill:#fff;
+  text-anchor:middle;dominant-baseline:middle;pointer-events:none;
+}
+.routeStart{fill:#2563eb}
+.routeMid{fill:#f59e0b}
+.routeLatest{fill:#dc2626}
+.routePin{stroke:#fff;stroke-width:4;pointer-events:all;cursor:help}
+.routeHoverPoly{
+  fill:transparent;stroke:transparent;stroke-width:1;
+  pointer-events:all;cursor:help;
+}
+.routeHoverPoly:hover{
+  fill:rgba(123,224,164,.14);
+  stroke:rgba(123,224,164,.78);stroke-width:2;
+}
+
+/* Analytics */
+.dashboardWrap{max-width:1100px;margin:0 auto;padding:30px 24px 60px}
+.dashboardHero{
+  background:linear-gradient(135deg,#0b315f,#0a6ca6);
+  border-radius:18px;padding:22px 26px;margin-bottom:24px;
+}
+.dashboardHero h1{margin:0;font-weight:500;font-size:28px}
+.dashboardHero p{margin:8px 0 0;color:#d4e8f3;font-size:13px}
+.dashSectionTitle{font-size:19px;font-weight:600;margin:28px 0 16px}
+.filterGrid{display:grid;grid-template-columns:1.4fr 1fr;gap:24px}
+.filterBox label{margin-top:0}
+.statusChecks{display:flex;flex-wrap:wrap;gap:8px}
+.statusChip{
+  border:1px solid var(--bd);background:rgba(255,255,255,.04);
+  color:var(--tx);border-radius:8px;padding:8px 10px;font-size:12px;
+}
+.statusChip.on{background:rgba(123,224,164,.18);border-color:var(--g)}
+.statsGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
+.statCard{background:#eef3f9;color:#142033;border-radius:14px;padding:18px}
+.statCard .label{font-size:11px;color:#56677b}
+.statCard .value{font-size:26px;margin-top:8px}
+.dashNote{font-size:11px;color:var(--mu);margin-top:12px;line-height:1.6}
+.chartGrid{
+  display:grid;grid-template-columns:1.2fr 1fr;gap:35px;
+  margin-top:35px;padding-top:28px;
+  border-top:1px solid rgba(255,255,255,.13);
+}
+.chartBox h3{margin:0 0 18px;font-size:18px}
+.barRows{display:flex;flex-direction:column;gap:10px}
+.barRow{
+  display:grid;grid-template-columns:115px 1fr 30px;
+  gap:10px;align-items:center;font-size:12px;
+}
+.barTrack{height:12px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden}
+.barFill{height:100%;background:#1775b8}
+.tableScroll{overflow:auto}
+.dataTable{width:100%;border-collapse:collapse;font-size:12px}
+.dataTable th,.dataTable td{
+  border:1px solid rgba(255,255,255,.12);
+  padding:9px 10px;text-align:left;vertical-align:top;
+}
+.dataTable th{background:rgba(255,255,255,.04);color:var(--mu);font-weight:500}
+.refreshBtn,.downloadBtn{
+  border:1px solid var(--bd);background:rgba(123,224,164,.08);
+  color:var(--tx);padding:10px 14px;border-radius:8px;
+}
+.downloadBtn{width:100%;margin-top:14px}
+
+@media(max-width:1250px){
+  .grid{grid-template-columns:minmax(240px,.8fr) minmax(300px,1.2fr)}
+  .grid>.pn:last-child{grid-column:1/-1}
+}
+@media(max-width:950px){
+  .grid{grid-template-columns:minmax(0,1fr)}
+  .mc{grid-template-columns:minmax(120px,.8fr) minmax(0,1fr)}
+  .statsGrid,.filterGrid,.chartGrid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:760px){
+  .sideNav{width:180px;flex-basis:180px}
+  body.sidebarCollapsed .sideNav{width:68px;flex-basis:68px}
+  .bar{flex-wrap:wrap;padding:12px 16px}
+  .bar h3{font-size:17px}
+  .headerActions{gap:10px;font-size:11px}
+  .grid{padding:14px}
+  .pn{padding:16px}
+  .mc{grid-template-columns:minmax(0,1fr)}
+  .mc video{height:170px}
+  .statsGrid,.filterGrid,.chartGrid{grid-template-columns:minmax(0,1fr)}
+  .tile{display:none}
+  .modal,.viewerModal{padding:10px}
+  .modalCard,.viewerCard{width:100%;padding:14px}
+  .modalHead h3,.viewerHead h3{font-size:16px}
+  .mapFooter{flex-direction:column;align-items:stretch}
+  .dashboardWrap{padding:20px 14px 40px}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+
+/* =========================================================
+   COMPACT SEARCH DASHBOARD LAYOUT
+   ========================================================= */
+
+#p3 .grid{
+  gap:14px !important;
+  padding:16px 20px !important;
+  min-height:calc(100vh - 68px) !important;
+}
+
+#p3 .pn{
+  padding:18px !important;
+}
+
+#p3 .pn h4{
+  margin:0 0 10px !important;
+  font-size:12px !important;
+  letter-spacing:.14em !important;
+}
+
+#p3 .pn label{
+  display:block !important;
+  font-size:10.5px !important;
+  letter-spacing:.12em !important;
+  text-transform:uppercase !important;
+  color:var(--mu) !important;
+  margin:8px 0 5px !important;
+}
+
+#p3 .pn label[style*="margin-top:0"]{
+  margin-top:0 !important;
+}
+
+#p3 .ph{
+  height:105px !important;
+  margin-bottom:6px !important;
+  border-radius:10px !important;
+  font-size:12px !important;
+}
+
+#p3 .ph img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  object-position:center !important;
+}
+
+#p3 .pn select,
+#p3 .pn input[type="number"],
+#p3 .pn input[type="date"],
+#p3 .pn input[type="time"]{
+  width:100% !important;
+  height:37px !important;
+  min-height:37px !important;
+  padding:0 11px !important;
+  margin:0 0 4px !important;
+  font-size:12.5px !important;
+  border-radius:9px !important;
+}
+
+#p3 .pn select{
+  line-height:37px !important;
+}
+
+#p3 .selectedLoc{
+  min-height:37px !important;
+  padding:8px 10px !important;
+  margin:0 0 6px !important;
+  border-radius:9px !important;
+  font-size:11.5px !important;
+  line-height:1.35 !important;
+  display:flex !important;
+  align-items:center !important;
+}
+
+#p3 #selectLocationBtn,
+#p3 #sb{
+  width:100% !important;
+  height:44px !important;
+  min-height:44px !important;
+  padding:0 10px !important;
+  margin:0 0 6px !important;
+  border-radius:10px !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  text-align:center !important;
+  line-height:1.1 !important;
+}
+
+#p3 #selectLocationBtn{
+  font-size:9.8px !important;
+  letter-spacing:.06em !important;
+}
+
+#p3 #sb{
+  font-size:11.5px !important;
+  letter-spacing:.12em !important;
+}
+
+#p3 .note{
+  font-size:10px !important;
+  line-height:1.4 !important;
+  margin-top:6px !important;
+}
+
+#p3 .warn{
+  padding:8px 12px !important;
+  margin-bottom:10px !important;
+  font-size:10.8px !important;
+}
+
+#p3 .empty{
+  padding:18px 0 !important;
+  font-size:12px !important;
+}
+
+#p3 .mc{
+  padding:12px !important;
+  gap:12px !important;
+  margin-bottom:9px !important;
+}
+
+#p3 .mc video{
+  height:105px !important;
+}
+
+#p3 .mc h5{
+  font-size:13px !important;
+}
+
+#p3 .mc p{
+  font-size:11px !important;
+}
+
+#p3 #tl>div:not(.empty){
+  padding:5px 0 5px 13px !important;
+  font-size:11px !important;
+  line-height:1.35 !important;
+}
+
+#p3 .latestLocationValue{
+  font-size:13px !important;
+  line-height:1.35 !important;
+}
+
+#p3 .miniMap{
+  margin-top:8px !important;
+  padding:6px !important;
+}
+
+#p3 .actions{
+  gap:7px !important;
+  margin-top:10px !important;
+}
+
+#p3 .actions .btn{
+  min-height:42px !important;
+  height:42px !important;
+  font-size:9.8px !important;
+  letter-spacing:.05em !important;
+}
+
+#p3 .bar{
+  min-height:62px !important;
+  padding:9px 20px !important;
+}
+
+#p3 .bar h3{
+  font-size:18px !important;
+}
+
+#p3 .pageContext{
+  font-size:9px !important;
+}
+
+@media(max-width:1250px){
+  #p3 .grid{
+    padding:14px 16px !important;
+    gap:12px !important;
+  }
+
+  #p3 .pn{
+    padding:16px !important;
+  }
+}
+
+</style>
+</head>
+
+<body>
+<div class="scan"></div>
+
+<section class="pg on" id="p1">
+  <div class="tile" style="left:6%;top:14%">
+    C07 · MAIN ENTRANCE<u></u><i>15:12 REC</i>
+  </div>
+
+  <div class="tile" style="right:7%;top:20%;animation-delay:-3s">
+    C12 · EAST WING<u></u><i>15:17 REC</i>
+  </div>
+
+  <div class="tile" style="left:12%;bottom:12%;animation-delay:-5s">
+    C09 · FOOD COURT<u></u><i>15:14 REC</i>
+  </div>
+
+  <div class="tile" style="right:10%;bottom:14%;animation-delay:-2s">
+    C03 · PLAYGROUND<u></u><i>15:10 REC</i>
+  </div>
+
+  <div class="k">AI-Assisted CCTV Search for Missing-Child Incidents</div>
+  <h1>KidTrace<b> AI</b></h1>
+  <h2>AI-Assisted CCTV Search for Missing-Child Incidents</h2>
+
+  <div class="tag">
+    Faster Search. Safer Families. Smarter Security.
+  </div>
+
+  <p>
+    Supporting authorised security teams in reviewing possible CCTV
+    sightings and coordinating faster responses during missing-child incidents.
+  </p>
+
+  <button class="btn" onclick="go('p2')">GET STARTED</button>
+</section>
+
+<section class="pg" id="p2">
+  <form class="gl" id="loginForm" novalidate autocomplete="off">
+    <div class="k">KidTrace AI</div>
+    <h2>Authorised Staff Access</h2>
+
+    <p class="sub">
+      Sign in to access the KidTrace AI Security Dashboard
+    </p>
+
+    <label for="u">Staff ID</label>
+    <input type="text" id="u" placeholder="e.g. SEC001">
+
+    <label for="w">Password</label>
+    <div class="in">
+      <input type="password" id="w">
+      <button
+        type="button"
+        class="eye"
+        id="eye"
+        aria-label="Show or hide password"
+      >◉</button>
+    </div>
+
+    <div class="row">
+      <label><input type="checkbox" id="rm">Remember me</label>
+      <button
+        type="button"
+        onclick="alert('Please contact your system administrator to reset your password.')"
+      >Forgot Password?</button>
+    </div>
+
+    <div id="msg" aria-live="polite"></div>
+    <button class="btn" id="lb" type="submit">LOGIN TO DASHBOARD</button>
+
+    <div class="foot">
+      🔒 Access restricted to authorised security personnel<br>
+      <span class="dot">●</span> Secure System Online
+    </div>
+  </form>
+</section>
+
+<section class="pg" id="p3">
+  <div class="appShell">
+    <aside class="sideNav">
+      <div class="sidebarToggleRow">
+        <button
+          type="button"
+          class="sidebarToggle"
+          onclick="toggleSidebar()"
+          aria-label="Collapse sidebar"
+          aria-expanded="true"
+          aria-controls="searchMenu"
+        >‹</button>
+      </div>
+
+      <div class="sideBrand">
+        <small>ELMINA LAKESIDE MALL</small>
+      </div>
+
+      <div class="sideMenu" id="searchMenu">
+        <button
+          class="active"
+          onclick="showSearchView()"
+          title="Search"
+          aria-label="Search"
+        >
+          <span class="navIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5"></circle>
+              <path d="m16 16 4.5 4.5"></path>
+            </svg>
+          </span>
+          <span class="navText">Search</span>
+        </button>
+
+        <button
+          onclick="showDashboardView()"
+          title="Dashboard"
+          aria-label="Dashboard"
+        >
+          <span class="navIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+            </svg>
+          </span>
+          <span class="navText">Dashboard</span>
+        </button>
+      </div>
+
+      <div class="sideCase">
+        <div>Current case:</div>
+        <div id="sideCaseId">—</div>
+      </div>
+    </aside>
+
+    <main class="shellMain">
+      <header class="bar">
+        <div class="headerTitle">
+          <h3>Kid<b>Trace</b> AI · Security Dashboard</h3>
+          <small class="pageContext">Search</small>
+        </div>
+
+        <div class="headerActions">
+          <span id="who"></span>
+          <span><b class="dot">●</b> System online</span>
+          <button class="lo" onclick="logout()">LOG OUT</button>
+        </div>
+      </header>
+
+ <div class="grid">
+  <div class="gl pn">
+    <h4>Incident details</h4>
+
+    <label style="margin-top:0">Recent photo</label>
+    <div
+      class="ph"
+      id="photoBox"
+      onclick="document.getElementById('photoInput').click()"
+    >
+      ＋ Recent photo (reference)
+    </div>
+
+    <input type="file" id="photoInput" accept="image/*" hidden>
+
+    <label for="top">Clothing (Top)</label>
+    <select id="top" aria-label="Top clothing">
+      <option>Pink shirt</option>
+      <option>Red shirt</option>
+      <option>Blue shirt</option>
+      <option>White shirt</option>
+      <option>Black shirt</option>
+      <option>Others</option>
+    </select>
+
+    <label for="bottom">Clothing (Bottom)</label>
+    <select id="bottom" aria-label="Bottom clothing">
+      <option>Blue jeans</option>
+      <option>Black pants</option>
+      <option>Shorts</option>
+      <option>Skirt</option>
+      <option>Others</option>
+    </select>
+
+    <label for="height">Approx. Height (cm)</label>
+    <input
+      type="number"
+      id="height"
+      min="80"
+      max="170"
+      value="115"
+      aria-label="Approximate height in centimetres"
+    >
+
+    <label for="lastDate">Last Seen Date</label>
+    <input
+      type="date"
+      id="lastDate"
+      aria-label="Last-seen date"
+    >
+
+    <label for="lastTime">Last Seen Time</label>
+    <input
+      type="time"
+      id="lastTime"
+      value="15:05"
+      aria-label="Last-seen time"
+    >
+
+    <label for="selectedLoc">Last Seen Location</label>
+    <div class="selectedLoc" id="selectedLoc">
+      No last-seen location selected.
+    </div>
+          <button
+            class="btn smallbtn"
+            id="selectLocationBtn"
+            type="button"
+            onclick="openLocation()"
+          >SELECT LAST-SEEN LOCATION</button>
+
+          <button
+            class="btn"
+            id="sb"
+            type="button"
+            onclick="runSearch()"
+          >RUN AI-ASSISTED SEARCH</button>
+
+          <div class="note">
+            Results are possible sightings ranked by visual and contextual
+            similarity. They are not confirmed identifications.
+          </div>
+        </div>
+
+        <div class="gl pn">
+          <h4>Ranked candidate clips</h4>
+
+          <div class="warn">
+            HUMAN VERIFICATION REQUIRED — authorised staff make the final decision.
+          </div>
+
+          <div class="caseid" id="caseid"></div>
+
+          <div id="res">
+            <div class="empty">
+              Enter the incident details and run a search to see candidate clips.
+            </div>
+          </div>
+        </div>
+
+        <div class="gl pn">
+          <h4>Verified movement</h4>
+
+          <div id="tl">
+            <div class="empty">
+              Verify a match to build the movement timeline.
+            </div>
+          </div>
+
+          <h4 style="margin-top:22px">Latest probable location</h4>
+
+          <div id="loc">
+            <div class="empty">Awaiting verification.</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<section class="pg" id="p4">
+  <div class="appShell">
+    <aside class="sideNav">
+      <div class="sidebarToggleRow">
+        <button
+          type="button"
+          class="sidebarToggle"
+          onclick="toggleSidebar()"
+          aria-label="Collapse sidebar"
+          aria-expanded="true"
+          aria-controls="dashboardMenu"
+        >‹</button>
+      </div>
+
+      <div class="sideBrand">
+        <small>ELMINA LAKESIDE MALL</small>
+      </div>
+
+      <div class="sideMenu" id="dashboardMenu">
+        <button
+          onclick="showSearchView()"
+          title="Search"
+          aria-label="Search"
+        >
+          <span class="navIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5"></circle>
+              <path d="m16 16 4.5 4.5"></path>
+            </svg>
+          </span>
+          <span class="navText">Search</span>
+        </button>
+
+        <button
+          class="active"
+          onclick="showDashboardView()"
+          title="Dashboard"
+          aria-label="Dashboard"
+        >
+          <span class="navIcon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="3" width="7" height="7" rx="2"></rect>
+              <rect x="3" y="14" width="7" height="7" rx="2"></rect>
+              <rect x="14" y="14" width="7" height="7" rx="2"></rect>
+            </svg>
+          </span>
+          <span class="navText">Dashboard</span>
+        </button>
+      </div>
+
+      <div class="sideCase">
+        Search activity and case statistics
+        <br><br>
+        <button class="refreshBtn" onclick="loadDashboard()">
+          ↻ Refresh Dashboard
+        </button>
+      </div>
+    </aside>
+
+    <main class="shellMain">
+      <header class="bar">
+        <div class="headerTitle">
+          <h3>Kid<b>Trace</b> AI · Security Dashboard</h3>
+          <small class="pageContext">Dashboard</small>
+        </div>
+
+        <div class="headerActions">
+          <span id="dashWho">Staff ID: SEC001</span>
+          <span><b class="dot">●</b> System online</span>
+          <button class="lo" onclick="logout()">LOG OUT</button>
+        </div>
+      </header>
+
+      <div class="dashboardWrap">
+        <div class="dashboardHero">
+          <h1>📊 Search Dashboard</h1>
+          <p>Search activity, case progress and response statistics</p>
+        </div>
+
+        <div class="dashSectionTitle">Filter Records</div>
+
+        <div class="filterGrid">
+          <div class="filterBox">
+            <label>Search creation date</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <input type="date" id="dashStart" aria-label="Start date">
+              <input type="date" id="dashEnd" aria-label="End date">
+            </div>
+          </div>
+
+          <div class="filterBox">
+            <label>Case status</label>
+            <div class="statusChecks" id="statusChecks"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="refreshBtn" onclick="loadDashboard()">Apply Filters</button>
+        </div>
+
+        <div class="dashNote" id="dashMessage" aria-live="polite">
+          Statistics use the selected filters. Each saved search counts as one case.
+        </div>
+
+        <div class="statsGrid">
+          <div class="statCard">
+            <div class="label">Total Searches</div>
+            <div class="value" id="stTotal">0</div>
+          </div>
+          <div class="statCard">
+            <div class="label">Active Cases</div>
+            <div class="value" id="stActive">0</div>
+          </div>
+          <div class="statCard">
+            <div class="label">Resolved Cases</div>
+            <div class="value" id="stResolved">0</div>
+          </div>
+          <div class="statCard">
+            <div class="label">Average Resolution Time</div>
+            <div class="value" id="stAvg">—</div>
+          </div>
+        </div>
+
+        <div class="dashNote">
+          Resolution time runs from search creation to Child Found.
+          Only completed cases with valid timestamps are included.
+        </div>
+
+        <div class="chartGrid">
+          <div class="chartBox">
+            <h3>Searches by Day</h3>
+            <div id="dayBars" class="barRows"></div>
+          </div>
+          <div class="chartBox">
+            <h3>Case Status</h3>
+            <div id="statusBars" class="barRows"></div>
+          </div>
+        </div>
+
+        <div class="dashSectionTitle">Most Reported Last-Seen Locations</div>
+
+        <div class="tableScroll">
+          <table class="dataTable">
+            <thead>
+              <tr><th>Location</th><th>Searches</th></tr>
+            </thead>
+            <tbody id="locationRows"></tbody>
+          </table>
+        </div>
+
+        <div class="dashNote">
+          Counts show locations entered during searches, not the overall safety
+          of each location.
+        </div>
+
+        <div class="dashSectionTitle">Search History</div>
+
+        <div class="tableScroll">
+          <table class="dataTable">
+            <thead>
+              <tr>
+                <th>Case ID</th>
+                <th>Search Started</th>
+                <th>Last-Seen Location</th>
+                <th>Status</th>
+                <th>Latest Recorded Location</th>
+                <th>Candidate Matches</th>
+                <th>Resolution Time</th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+
+        <button class="downloadBtn" onclick="downloadHistory()">
+          ⬇ Download Search History
+        </button>
+
+        <div class="dashNote">
+          Statistics are calculated from saved search records.
+          Simulated locations remain prototype simulation data.
+        </div>
+      </div>
+    </main>
+  </div>
+</section>
+
+<div class="modal" id="locModal">
+  <div class="gl modalCard">
+    <div class="modalHead">
+      <h3>Select Last-Seen Location · Elmina Lakeside Mall</h3>
+      <button class="x" onclick="closeLocation()" aria-label="Close map">✕</button>
+    </div>
+
+    <div class="note" style="margin-bottom:12px">
+      Hover to see a place name. Click the area and confirm.
+      Use + / − to zoom and drag to move.
+    </div>
+
+    <div class="mapWrap">
+      <div class="zoomStage" id="locationZoomStage">
+        <div class="mapZoomControls">
+          <button type="button" onclick="zoomLocation(1)" aria-label="Zoom in">+</button>
+          <button type="button" onclick="zoomLocation(-1)" aria-label="Zoom out">−</button>
+        </div>
+
+        <div class="zoomContent" id="locationZoomContent">
+          <img src="/api/floor-plan" alt="Elmina Lakeside Mall floor plan">
+          <svg id="mapSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+    </div>
+
+    <div class="mapFooter">
+      <div class="selectedLoc" id="modalSelection" style="flex:1;margin:0">
+        No area selected.
+      </div>
+      <button class="btn" onclick="confirmLocation()">CONFIRM LOCATION</button>
+    </div>
+  </div>
+</div>
+
+<div id="mapTip" role="tooltip"></div>
+
+<div
+  class="viewerModal"
+  id="viewerModal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="viewerTitle"
+>
+  <div class="gl viewerCard">
+    <div class="viewerHead">
+      <h3 id="viewerTitle">Preview</h3>
+      <button class="x" type="button" onclick="closeViewer()" aria-label="Close preview">✕</button>
+    </div>
+    <div class="viewerBody" id="viewerBody"></div>
+    <div class="viewerHint">Click ✕ or press Escape to close.</div>
+  </div>
+</div>
+
+<script>
+const $ = query => document.querySelector(query);
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+let places = [];
+let selectedPlace = null;
+let caseId = null;
+let currentMatches = [];
+let verifiedIndex = -1;
+let trail = [];
+let referencePhotoURL = null;
+
+const DASH_STATUSES = [
+  'Searching',
+  'Match Reviewed',
+  'Officer Dispatched',
+  'Child Found'
+];
+
+const selectedDashStatuses = new Set(DASH_STATUSES);
+
+const zoomStates = {
+  location: {scale: 1, x: 0, y: 0},
+  route: {scale: 1, x: 0, y: 0}
+};
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character]);
+}
+
+function localDateString(date = new Date()) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0')
+  ].join('-');
+}
+
+async function readResponse(response) {
+  let data;
+
+  try {
+    data = await response.json();
+  } catch (_) {
+    throw new Error(
+      `The server returned an unexpected response (${response.status}). Check the VS Code terminal.`
+    );
+  }
+
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || 'The request could not be completed.');
+  }
+
+  return data;
+}
+
+function go(id) {
+  hideMapTip();
+
+  document.querySelectorAll('.pg').forEach(page => {
+    page.classList.toggle('on', page.id === id);
+  });
+}
+
+function showSearchView() {
+  go('p3');
+}
+
+async function showDashboardView() {
+  go('p4');
+  initDashboardFilters();
+  await loadDashboard();
+}
+
+function msg(text, className = '') {
+  $('#msg').textContent = text;
+  $('#msg').className = className;
+}
+
+/* Sidebar */
+function setSidebarCollapsed(collapsed) {
+  document.body.classList.toggle('sidebarCollapsed', collapsed);
+
+  document.querySelectorAll('.sidebarToggle').forEach(button => {
+    button.textContent = collapsed ? '›' : '‹';
+    button.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+    button.setAttribute('aria-label', button.title);
+    button.setAttribute('aria-expanded', String(!collapsed));
+  });
+
+  hideMapTip();
+
+  try {
+    localStorage.setItem(
+      'kidtrace_sidebar_collapsed',
+      String(collapsed)
+    );
+  } catch (_) {}
+}
+
+function toggleSidebar() {
+  setSidebarCollapsed(
+    !document.body.classList.contains('sidebarCollapsed')
+  );
+}
+
+function initialiseSidebar() {
+  let collapsed = window.innerWidth <= 760;
+
+  try {
+    const saved = localStorage.getItem('kidtrace_sidebar_collapsed');
+
+    if (saved !== null) {
+      collapsed = saved === 'true';
+    }
+  } catch (_) {}
+
+  setSidebarCollapsed(collapsed);
+}
+
+/* Tooltip */
+function hideMapTip() {
+  const tip = $('#mapTip');
+
+  if (tip) tip.style.display = 'none';
+}
+
+function showMapTip(event, text) {
+  const tip = $('#mapTip');
+
+  if (!tip) return;
+
+  tip.textContent = text;
+  tip.style.display = 'block';
+
+  const bounds = tip.getBoundingClientRect();
+  const margin = 10;
+  const offset = 14;
+
+  let left = event.clientX + offset;
+  let top = event.clientY + offset;
+
+  if (left + bounds.width > window.innerWidth - margin) {
+    left = event.clientX - bounds.width - offset;
+  }
+
+  if (top + bounds.height > window.innerHeight - margin) {
+    top = event.clientY - bounds.height - offset;
+  }
+
+  tip.style.left = Math.max(margin, left) + 'px';
+  tip.style.top = Math.max(margin, top) + 'px';
+}
+
+function bindMapTooltip(element, text) {
+  element.addEventListener('pointerenter', event => {
+    showMapTip(event, text);
+  });
+
+  element.addEventListener('pointermove', event => {
+    showMapTip(event, text);
+  });
+
+  element.addEventListener('pointerleave', hideMapTip);
+
+  const title = document.createElementNS(SVG_NS, 'title');
+  title.textContent = text;
+  element.appendChild(title);
+}
+
+/* Media viewer */
+function openImageViewer(src, title = 'Image Preview') {
+  hideMapTip();
+  $('#viewerTitle').textContent = title;
+  $('#viewerBody').replaceChildren();
+
+  const image = document.createElement('img');
+  image.src = src;
+  image.alt = title;
+
+  $('#viewerBody').appendChild(image);
+  $('#viewerModal').classList.add('on');
+}
+
+function openVideoViewer(src, title = 'CCTV Clip') {
+  hideMapTip();
+  $('#viewerTitle').textContent = title;
+  $('#viewerBody').replaceChildren();
+
+  const video = document.createElement('video');
+  video.src = src;
+  video.controls = true;
+  video.autoplay = true;
+  video.playsInline = true;
+
+  $('#viewerBody').appendChild(video);
+  $('#viewerModal').classList.add('on');
+}
+
+function closeViewer() {
+  hideMapTip();
+
+  $('#viewerBody').querySelectorAll('video').forEach(video => {
+    video.pause();
+  });
+
+  $('#viewerModal').classList.remove('on');
+  $('#viewerBody').replaceChildren();
+}
+
+$('#viewerModal').addEventListener('click', event => {
+  if (event.target === $('#viewerModal')) closeViewer();
+});
+
+$('#locModal').addEventListener('click', event => {
+  if (event.target === $('#locModal')) closeLocation();
+});
+
+window.addEventListener('keydown', event => {
+  if (event.key === 'Escape') {
+    closeViewer();
+    closeLocation();
+  }
+});
+
+window.addEventListener('blur', hideMapTip);
+
+/* Zoom and pan */
+function clampPan(kind, stageId, contentId) {
+  const state = zoomStates[kind];
+  const stage = document.getElementById(stageId);
+  const content = document.getElementById(contentId);
+
+  if (!stage || !content) return;
+
+  if (state.scale <= 1) {
+    state.x = 0;
+    state.y = 0;
+    return;
+  }
+
+  const maxX = Math.max(
+    0,
+    content.offsetWidth * state.scale - stage.clientWidth
+  );
+
+  const maxY = Math.max(
+    0,
+    content.offsetHeight * state.scale - stage.clientHeight
+  );
+
+  state.x = Math.min(0, Math.max(-maxX, state.x));
+  state.y = Math.min(0, Math.max(-maxY, state.y));
+}
+
+function applyZoom(kind, stageId, contentId) {
+  const content = document.getElementById(contentId);
+
+  if (!content) return;
+
+  clampPan(kind, stageId, contentId);
+
+  const state = zoomStates[kind];
+
+  content.style.transform =
+    `translate(${state.x}px,${state.y}px) scale(${state.scale})`;
+}
+
+function changeZoom(kind, stageId, contentId, direction) {
+  hideMapTip();
+
+  const state = zoomStates[kind];
+  const levels = [1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4];
+
+  let index = levels.reduce((best, value, current) => {
+    return Math.abs(value - state.scale) <
+      Math.abs(levels[best] - state.scale)
+      ? current
+      : best;
+  }, 0);
+
+  index = Math.max(
+    0,
+    Math.min(levels.length - 1, index + direction)
+  );
+
+  state.scale = levels[index];
+
+  if (state.scale === 1) {
+    state.x = 0;
+    state.y = 0;
+  }
+
+  applyZoom(kind, stageId, contentId);
+}
+
+function zoomLocation(direction) {
+  changeZoom(
+    'location',
+    'locationZoomStage',
+    'locationZoomContent',
+    direction
+  );
+}
+
+function zoomRoute(direction) {
+  changeZoom(
+    'route',
+    'routeZoomStage',
+    'routeZoomContent',
+    direction
+  );
+}
+
+function initPanZoom(stageId, contentId, kind) {
+  const stage = document.getElementById(stageId);
+  const content = document.getElementById(contentId);
+
+  if (!stage || !content || stage.dataset.panZoomReady === '1') {
+    return;
+  }
+
+  stage.dataset.panZoomReady = '1';
+
+  let dragging = false;
+  let moved = false;
+  let startX = 0;
+  let startY = 0;
+  let baseX = 0;
+  let baseY = 0;
+
+  stage.addEventListener('pointerdown', event => {
+    moved = false;
+
+    if (event.target.closest('.mapZoomControls')) return;
+    if (zoomStates[kind].scale <= 1 || event.button !== 0) return;
+
+    dragging = true;
+    startX = event.clientX;
+    startY = event.clientY;
+    baseX = zoomStates[kind].x;
+    baseY = zoomStates[kind].y;
+  });
+
+  stage.addEventListener('pointermove', event => {
+    if (!dragging) return;
+
+    const dx = event.clientX - startX;
+    const dy = event.clientY - startY;
+
+    if (!moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) {
+      moved = true;
+      stage.classList.add('dragging');
+
+      try {
+        stage.setPointerCapture(event.pointerId);
+      } catch (_) {}
+    }
+
+    if (!moved) return;
+
+    hideMapTip();
+    zoomStates[kind].x = baseX + dx;
+    zoomStates[kind].y = baseY + dy;
+    applyZoom(kind, stageId, contentId);
+  });
+
+  function stopDragging(event) {
+    dragging = false;
+    stage.classList.remove('dragging');
+
+    try {
+      if (stage.hasPointerCapture(event.pointerId)) {
+        stage.releasePointerCapture(event.pointerId);
+      }
+    } catch (_) {}
+  }
+
+  stage.addEventListener('pointerup', stopDragging);
+  stage.addEventListener('pointercancel', stopDragging);
+
+  stage.addEventListener('pointerleave', event => {
+    if (!moved) stopDragging(event);
+    hideMapTip();
+  });
+
+  stage.addEventListener('click', event => {
+    if (!moved) return;
+
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    moved = false;
+  }, true);
+
+  stage.addEventListener('wheel', event => {
+    event.preventDefault();
+
+    changeZoom(
+      kind,
+      stageId,
+      contentId,
+      event.deltaY < 0 ? 1 : -1
+    );
+  }, {passive: false});
+
+  const image = content.querySelector('img');
+
+  if (image) {
+    image.addEventListener('load', () => {
+      applyZoom(kind, stageId, contentId);
+    });
+  }
+}
+
+/* Authentication */
+try {
+  const remembered = localStorage.getItem('kt_id');
+
+  if (remembered) {
+    $('#u').value = remembered;
+    $('#rm').checked = true;
+  }
+} catch (_) {}
+
+$('#eye').onclick = () => {
+  const password = $('#w');
+  password.type = password.type === 'password' ? 'text' : 'password';
+};
+
+$('#loginForm').onsubmit = async event => {
+  event.preventDefault();
+
+  const staffId = $('#u').value.trim();
+  const password = $('#w').value;
+
+  if (!staffId || !password) {
+    msg('Please enter your Staff ID and password.', 'err');
+    return;
+  }
+
+  $('#lb').disabled = true;
+  msg('Authenticating authorised staff…', 'ok');
+
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        staff_id: staffId,
+        password
+      })
+    });
+
+    const data = await readResponse(response);
+
+    try {
+      if ($('#rm').checked) {
+        localStorage.setItem('kt_id', staffId);
+      } else {
+        localStorage.removeItem('kt_id');
+      }
+    } catch (_) {}
+
+    $('#who').textContent = 'Staff ID: ' + data.staff_id;
+    $('#dashWho').textContent = 'Staff ID: ' + data.staff_id;
+
+    await loadPlaces();
+
+    $('#w').value = '';
+    msg('');
+    go('p3');
+  } catch (error) {
+    msg(error.message, 'err');
+  } finally {
+    $('#lb').disabled = false;
+  }
+};
+
+async function logout() {
+  try {
+    await readResponse(await fetch('/api/logout', {method: 'POST'}));
+
+    closeViewer();
+    closeLocation();
+
+    caseId = null;
+    currentMatches = [];
+    trail = [];
+    selectedPlace = null;
+    verifiedIndex = -1;
+
+    document.querySelectorAll('.mapPoly').forEach(polygon => {
+      polygon.classList.remove('sel');
+    });
+
+    $('#selectedLoc').textContent = 'No last-seen location selected.';
+    $('#modalSelection').textContent = 'No area selected.';
+    $('#sideCaseId').textContent = '—';
+    $('#caseid').textContent = '';
+
+    $('#res').innerHTML = `
+      <div class="empty">
+        Enter the incident details and run a search to see candidate clips.
+      </div>
+    `;
+
+    $('#tl').innerHTML = `
+      <div class="empty">
+        Verify a match to build the movement timeline.
+      </div>
+    `;
+
+    $('#loc').innerHTML = '<div class="empty">Awaiting verification.</div>';
+
+    go('p2');
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+/* Reference photo */
+$('#photoInput').addEventListener('change', event => {
+  const file = event.target.files[0];
+
+  if (!file) return;
+
+  if (referencePhotoURL) URL.revokeObjectURL(referencePhotoURL);
+
+  referencePhotoURL = URL.createObjectURL(file);
+
+  const image = document.createElement('img');
+  image.src = referencePhotoURL;
+  image.alt = 'Reference photo';
+
+  $('#photoBox').replaceChildren(image);
+  $('#photoBox').classList.add('media-clickable');
+  $('#photoBox').onclick = () => {
+    openImageViewer(referencePhotoURL, 'Reference Photo');
+  };
+});
+
+/* Location selection */
+async function loadPlaces() {
+  if (places.length) return;
+
+  const data = await readResponse(await fetch('/api/places'));
+  places = data.places || [];
+
+  const svg = $('#mapSvg');
+  svg.replaceChildren();
+
+  places.forEach(place => {
+    if (!Array.isArray(place.polygon) || place.polygon.length < 3) return;
+
+    const polygon = document.createElementNS(SVG_NS, 'polygon');
+
+    polygon.setAttribute(
+      'points',
+      place.polygon.map(([x, y]) => `${x * 1000},${y * 1000}`).join(' ')
+    );
+
+    polygon.setAttribute('class', 'mapPoly');
+    polygon.dataset.id = place.id;
+
+    bindMapTooltip(
+      polygon,
+      `Place: ${place.name}\nUnit / area: ${place.unit}`
+    );
+
+    polygon.addEventListener('click', () => {
+      selectMapPlace(place.id);
+    });
+
+    svg.appendChild(polygon);
+  });
+}
+
+async function openLocation() {
+  try {
+    await loadPlaces();
+    hideMapTip();
+    $('#locModal').classList.add('on');
+
+    zoomStates.location = {scale: 1, x: 0, y: 0};
+
+    initPanZoom('locationZoomStage', 'locationZoomContent', 'location');
+    applyZoom('location', 'locationZoomStage', 'locationZoomContent');
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+function closeLocation() {
+  hideMapTip();
+  $('#locModal').classList.remove('on');
+}
+
+function selectMapPlace(id) {
+  selectedPlace = places.find(place => place.id === id);
+
+  document.querySelectorAll('.mapPoly').forEach(polygon => {
+    polygon.classList.toggle('sel', polygon.dataset.id === id);
+  });
+
+  $('#modalSelection').textContent = selectedPlace
+    ? selectedPlace.label
+    : 'No area selected.';
+}
+
+function confirmLocation() {
+  if (!selectedPlace) {
+    alert('Please select an area first.');
+    return;
+  }
+
+  $('#selectedLoc').textContent = '📍 ' + selectedPlace.label;
+  closeLocation();
+}
+
+/* Search */
+async function runSearch() {
+  if (!selectedPlace) {
+    alert('Please select the last-seen location first.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('top', $('#top').value);
+  formData.append('bottom', $('#bottom').value);
+  formData.append('height', $('#height').value);
+  formData.append('last_date', $('#lastDate').value);
+  formData.append('last_time', $('#lastTime').value);
+  formData.append('place_id', selectedPlace.id);
+
+  const photo = $('#photoInput').files[0];
+  if (photo) formData.append('photo', photo);
+
+  const button = $('#sb');
+  const startedAt = Date.now();
+
+  button.disabled = true;
+  button.classList.add('loading');
+  button.innerHTML = 'ANALYSING<br>FOOTAGE…';
+
+  $('#res').innerHTML = `
+    <div class="empty">
+      Analysing CCTV footage and narrowing possible sightings…
+    </div>
+  `;
+
+  try {
+    const response = await fetch('/api/search', {
+      method: 'POST',
+      body: formData
+    });
+
+    const data = await readResponse(response);
+
+    const remaining = 2200 - (Date.now() - startedAt);
+    if (remaining > 0) {
+      await new Promise(resolve => setTimeout(resolve, remaining));
+    }
+
+    caseId = data.case_id;
+    currentMatches = data.matches || [];
+    verifiedIndex = -1;
+    trail = [];
+
+    $('#caseid').textContent = 'CASE ID: ' + caseId;
+    $('#sideCaseId').textContent = caseId;
+
+    $('#tl').innerHTML = `
+      <div class="empty">
+        Verify a match to build the movement timeline.
+      </div>
+    `;
+    $('#loc').innerHTML = '<div class="empty">Awaiting verification.</div>';
+
+    drawMatches();
+  } catch (error) {
+    $('#res').innerHTML = `
+      <div class="empty err">${escapeHTML(error.message)}</div>
+    `;
+  } finally {
+    button.disabled = false;
+    button.classList.remove('loading');
+    button.innerHTML = 'RUN AI-ASSISTED<br>SEARCH';
+  }
+}
+
+function drawMatches() {
+  if (!currentMatches.length) {
+    $('#res').innerHTML = '<div class="empty">No candidate clips were found.</div>';
+    return;
+  }
+
+  $('#res').innerHTML = currentMatches.map((match, index) => {
+    const score = Math.max(0, Math.min(100, Number(match.score) || 0));
+    const breakdown = match.breakdown || {};
+
+    const videoHTML = match.video_url
+      ? `
+        <video
+          class="media-clickable candidate-video"
+          src="${escapeHTML(match.video_url)}"
+          autoplay muted loop playsinline
+          data-video-url="${escapeHTML(match.video_url)}"
+          data-video-title="MATCH ${String(index + 1).padStart(2, '0')} · Camera ${escapeHTML(match.camera_id)}"
+        ></video>
+      `
+      : '<div class="empty">Video unavailable</div>';
+
+    const actionHTML = verifiedIndex === index
+      ? '<p class="a">✓ Verified by staff</p>'
+      : `
+        <div class="bt">
+          <button
+            class="v"
+            onclick="verifyMatch(${index})"
+            ${!match.mapped ? 'disabled' : ''}
+          >VERIFY MATCH</button>
+          <button onclick="toggleBreak(${index})">MATCH BREAKDOWN</button>
+        </div>
+        <div class="breakdown" id="bd${index}">
+          Visual ${escapeHTML(breakdown.visual ?? 0)}% / 55% ·
+          Top ${escapeHTML(breakdown.top ?? 0)}% / 18% ·
+          Bottom ${escapeHTML(breakdown.bottom ?? 0)}% / 12%<br>
+          Height ${escapeHTML(breakdown.height ?? 0)}% / 10% ·
+          Location ${escapeHTML(breakdown.location ?? 0)}% / 5%
+        </div>
+      `;
+
+    return `
+      <div class="mc ${index === 0 ? 'cur' : ''}">
+        <div>${videoHTML}</div>
+        <div>
+          <h5>MATCH ${String(index + 1).padStart(2, '0')} · Similarity ${score}%</h5>
+          <div class="sim"><i style="width:${score}%"></i></div>
+          <p>
+            Camera ${escapeHTML(match.camera_id)} ·
+            ${escapeHTML(match.location)} ·
+            ${escapeHTML(match.time)}
+          </p>
+          ${actionHTML}
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.querySelectorAll('.candidate-video').forEach(video => {
+    video.addEventListener('click', () => {
+      openVideoViewer(video.dataset.videoUrl, video.dataset.videoTitle);
+    });
+  });
+}
+
+function toggleBreak(index) {
+  $('#bd' + index)?.classList.toggle('on');
+}
+
+async function verifyMatch(index) {
+  try {
+    const response = await fetch('/api/verify', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({case_id: caseId, index})
+    });
+
+    const data = await readResponse(response);
+
+    verifiedIndex = index;
+    trail = data.trail || [];
+
+    drawMatches();
+    drawTrail(data.latest);
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+/* Movement maps */
+function movementLegend(enlarged = false) {
+  return `
+    <div class="mapLegend">
+      <span><span class="legendDot legendBlue"></span>Start</span>
+      <span>·</span>
+      <span><span class="legendDot legendOrange"></span>Intermediate</span>
+      <span>·</span>
+      <span><span class="legendDot legendRed"></span>Latest demo location</span>
+      <span class="mapClickHint">
+        ${
+          enlarged
+            ? 'Hover over a shop or numbered pin for its location · Use + / − to zoom.'
+            : 'Hover for location name · Click map to enlarge'
+        }
+      </span>
+    </div>
+  `;
+}
+
+function drawTrail(latest) {
+  $('#tl').innerHTML = trail.map(stop => `
+    <div>
+      <b>${escapeHTML(stop.display_time || '')}</b>
+      — ${escapeHTML(stop.location)}
+    </div>
+  `).join('');
+
+  $('#loc').innerHTML = `
+    ${movementLegend()}
+    <div class="latestLocationValue">
+      ${escapeHTML(latest.location)} — <b>${escapeHTML(latest.camera)}</b>
+    </div>
+    <div class="miniMap media-clickable" onclick="openRouteViewer()">
+      <img src="/api/floor-plan" alt="Simulated movement map">
+      <svg id="routeSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
+    </div>
+    <div class="mapCaption">
+      Follow the numbered pins in time order. Lines connect simulated stops
+      and do not represent confirmed walking routes.
+    </div>
+    <div class="actions">
+      <button class="btn smallbtn" onclick="dispatchOfficer()">DISPATCH OFFICER</button>
+      <button class="btn smallbtn" onclick="markFound()">MARK CHILD FOUND</button>
+    </div>
+    <div id="caseStatus" class="note"></div>
+  `;
+
+  drawMovementMap($('#routeSvg'));
+}
+
+function addMovementHoverAreas(svg) {
+  places.forEach(place => {
+    if (!Array.isArray(place.polygon) || place.polygon.length < 3) return;
+
+    const polygon = document.createElementNS(SVG_NS, 'polygon');
+
+    polygon.setAttribute(
+      'points',
+      place.polygon.map(([x, y]) => `${x * 1000},${y * 1000}`).join(' ')
+    );
+
+    polygon.setAttribute('class', 'routeHoverPoly');
+
+    bindMapTooltip(
+      polygon,
+      `Place: ${place.name}\nUnit / area: ${place.unit}`
+    );
+
+    svg.appendChild(polygon);
+  });
+}
+
+function drawMovementMap(svg) {
+  if (!svg) return;
+
+  svg.replaceChildren();
+  addMovementHoverAreas(svg);
+
+  const stops = trail.filter(stop => {
+    return Array.isArray(stop.point) &&
+      stop.point.length >= 2 &&
+      Number.isFinite(Number(stop.point[0])) &&
+      Number.isFinite(Number(stop.point[1]));
+  });
+
+  const points = stops.map(stop => [
+    Number(stop.point[0]) * 1000,
+    Number(stop.point[1]) * 1000
+  ]);
+
+  if (points.length > 1) {
+    const line = document.createElementNS(SVG_NS, 'polyline');
+
+    line.setAttribute(
+      'points',
+      points.map(point => point.join(',')).join(' ')
+    );
+    line.setAttribute('class', 'routeLine');
+    svg.appendChild(line);
+  }
+
+  stops.forEach((stop, index) => {
+    const [x, y] = points[index];
+    const group = document.createElementNS(SVG_NS, 'g');
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    const text = document.createElementNS(SVG_NS, 'text');
+
+    circle.setAttribute('cx', x);
+    circle.setAttribute('cy', y);
+    circle.setAttribute('r', 18);
+
+    const colour = index === 0
+      ? 'routeStart'
+      : index === stops.length - 1
+        ? 'routeLatest'
+        : 'routeMid';
+
+    circle.setAttribute('class', 'routePin ' + colour);
+
+    text.setAttribute('x', x);
+    text.setAttribute('y', y + 1);
+    text.setAttribute('class', 'routeLabel');
+    text.textContent = String(stop.number ?? index + 1);
+
+    group.appendChild(circle);
+    group.appendChild(text);
+
+    bindMapTooltip(group, [
+      `Stop ${stop.number ?? index + 1}`,
+      `Location: ${stop.location || 'Unknown location'}`,
+      stop.display_time ? `Time: ${stop.display_time}` : '',
+      stop.camera ? `Camera: ${stop.camera}` : ''
+    ].filter(Boolean).join('\n'));
+
+    svg.appendChild(group);
+  });
+}
+
+function openRouteViewer() {
+  hideMapTip();
+
+  $('#viewerTitle').textContent = 'Elmina Lakeside Mall — Movement Map';
+
+  $('#viewerBody').innerHTML = `
+    <div class="movementViewer">
+      ${movementLegend(true)}
+      <div class="zoomStage" id="routeZoomStage">
+        <div class="mapZoomControls">
+          <button type="button" onclick="zoomRoute(1)" aria-label="Zoom in">+</button>
+          <button type="button" onclick="zoomRoute(-1)" aria-label="Zoom out">−</button>
+        </div>
+        <div class="zoomContent" id="routeZoomContent">
+          <img src="/api/floor-plan" alt="Elmina Lakeside Mall movement map">
+          <svg
+            id="routeViewerSvg"
+            viewBox="0 0 1000 1000"
+            preserveAspectRatio="none"
+          ></svg>
+        </div>
+      </div>
+      <div class="mapCaption">
+        Follow the numbered pins in time order.
+        Lines connect simulated stops and do not represent confirmed walking routes.
+      </div>
+    </div>
+  `;
+
+  $('#viewerModal').classList.add('on');
+  zoomStates.route = {scale: 1, x: 0, y: 0};
+
+  drawMovementMap($('#routeViewerSvg'));
+  initPanZoom('routeZoomStage', 'routeZoomContent', 'route');
+  applyZoom('route', 'routeZoomStage', 'routeZoomContent');
+}
+
+/* Case actions */
+async function dispatchOfficer() {
+  try {
+    const response = await fetch('/api/dispatch', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({case_id: caseId})
+    });
+
+    const data = await readResponse(response);
+
+    $('#caseStatus').innerHTML = `
+      <span class="a">● Simulated officer dispatch recorded</span><br>
+      Officer en route to ${escapeHTML(data.latest)}.
+    `;
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function markFound() {
+  try {
+    const response = await fetch('/api/resolve', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({case_id: caseId})
+    });
+
+    await readResponse(response);
+
+    $('#caseStatus').innerHTML =
+      '<span class="a">✓ Child safely located and reunited with guardian.</span>';
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+/* Analytics */
+function initDashboardFilters() {
+  const box = $('#statusChecks');
+
+  if (!box.children.length) {
+    DASH_STATUSES.forEach(status => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'statusChip on';
+      button.textContent = status;
+
+      button.onclick = () => {
+        if (selectedDashStatuses.has(status)) {
+          selectedDashStatuses.delete(status);
+        } else {
+          selectedDashStatuses.add(status);
+        }
+
+        button.classList.toggle('on', selectedDashStatuses.has(status));
+      };
+
+      box.appendChild(button);
+    });
+  }
+
+  const today = localDateString();
+  if (!$('#dashStart').value) $('#dashStart').value = today;
+  if (!$('#dashEnd').value) $('#dashEnd').value = today;
+}
+
+function dashboardQuery() {
+  const parameters = new URLSearchParams();
+
+  if ($('#dashStart').value) parameters.set('start', $('#dashStart').value);
+  if ($('#dashEnd').value) parameters.set('end', $('#dashEnd').value);
+
+  if (selectedDashStatuses.size) {
+    parameters.set('status', [...selectedDashStatuses].join(','));
+  }
+
+  return parameters.toString();
+}
+
+function fmtDateTime(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString('en-MY', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+function fmtSeconds(value) {
+  if (value === null || value === undefined) return '—';
+
+  const seconds = Math.max(0, Math.round(Number(value)));
+  if (!Number.isFinite(seconds)) return '—';
+  if (seconds < 60) return `${seconds} sec`;
+
+  return `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
+}
+
+function renderBars(targetId, items, labelKey, valueKey) {
+  const target = $(targetId);
+  const rows = Array.isArray(items) ? items : [];
+  const maximum = Math.max(
+    1,
+    ...rows.map(item => Number(item[valueKey]) || 0)
+  );
+
+  target.innerHTML = rows.length
+    ? rows.map(item => {
+      const value = Math.max(0, Number(item[valueKey]) || 0);
+
+      return `
+        <div class="barRow">
+          <div>${escapeHTML(item[labelKey])}</div>
+          <div class="barTrack">
+            <div class="barFill" style="width:${value / maximum * 100}%"></div>
+          </div>
+          <div>${value}</div>
+        </div>
+      `;
+    }).join('')
+    : '<div class="empty">No records for this filter.</div>';
+}
+
+function clearDashboard() {
+  $('#stTotal').textContent = '0';
+  $('#stActive').textContent = '0';
+  $('#stResolved').textContent = '0';
+  $('#stAvg').textContent = '—';
+  renderBars('#dayBars', [], 'date', 'count');
+  renderBars('#statusBars', [], 'status', 'count');
+  $('#locationRows').innerHTML = '<tr><td colspan="2">No records</td></tr>';
+  $('#historyRows').innerHTML = '<tr><td colspan="7">No records</td></tr>';
+}
+
+async function loadDashboard() {
+  initDashboardFilters();
+
+  const message = $('#dashMessage');
+  message.classList.remove('err');
+
+  if (!selectedDashStatuses.size) {
+    clearDashboard();
+    message.textContent = 'Select at least one case status to show records.';
+    return;
+  }
+
+  message.textContent = 'Loading dashboard…';
+
+  try {
+    const response = await fetch('/api/dashboard?' + dashboardQuery());
+    const data = await readResponse(response);
+    const stats = data.stats || {};
+
+    $('#stTotal').textContent = stats.total ?? 0;
+    $('#stActive').textContent = stats.active ?? 0;
+    $('#stResolved').textContent = stats.resolved ?? 0;
+    $('#stAvg').textContent = fmtSeconds(stats.average_resolution_seconds);
+
+    renderBars('#dayBars', data.by_day, 'date', 'count');
+    renderBars('#statusBars', data.by_status, 'status', 'count');
+
+    const locations = data.top_locations || [];
+    const records = data.records || [];
+
+    $('#locationRows').innerHTML = locations.length
+      ? locations.map(item => `
+        <tr>
+          <td>${escapeHTML(item.location)}</td>
+          <td>${escapeHTML(item.count)}</td>
+        </tr>
+      `).join('')
+      : '<tr><td colspan="2">No records</td></tr>';
+
+    $('#historyRows').innerHTML = records.length
+      ? records.map(record => `
+        <tr>
+          <td>${escapeHTML(record.case_id)}</td>
+          <td>${escapeHTML(fmtDateTime(record.created_at))}</td>
+          <td>${escapeHTML(record.last_seen_location || '—')}</td>
+          <td>${escapeHTML(record.status)}</td>
+          <td>${escapeHTML(record.latest_location || '—')}</td>
+          <td>${escapeHTML(record.match_count)}</td>
+          <td>${escapeHTML(fmtSeconds(record.resolution_seconds))}</td>
+        </tr>
+      `).join('')
+      : '<tr><td colspan="7">No records</td></tr>';
+
+    message.textContent =
+      'Statistics use the selected filters. Each saved search counts as one case.';
+  } catch (error) {
+    clearDashboard();
+    message.classList.add('err');
+    message.textContent = 'Unable to load dashboard: ' + error.message;
+  }
+}
+
+function downloadHistory() {
+  if (!selectedDashStatuses.size) {
+    alert('Select at least one case status before downloading.');
+    return;
+  }
+
+  window.location.href = '/api/dashboard/export?' + dashboardQuery();
+}
+
+/* Initial state */
+$('#lastDate').value = localDateString();
+initialiseSidebar();
+</script>
+</body>
+</html>
